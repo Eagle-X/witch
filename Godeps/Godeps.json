@@ -1,0 +1,41 @@
+{
+	"ImportPath": "github.com/eleme/witch",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v75",
+	"Packages": [
+		"github.com/eleme/witch"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/braintree/manners",
+			"Comment": "0.4.0-15-g82a8879",
+			"Rev": "82a8879fc5fd0381fa8b2d8033b19bf255252088"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/inject",
+			"Comment": "v1.0-rc1-10-g33e0aa1",
+			"Rev": "33e0aa1cb7c019ccc3fbe049a8262a6403d30504"
+		},
+		{
+			"ImportPath": "github.com/go-martini/martini",
+			"Comment": "v1.0-184-g0c6ad59",
+			"Rev": "0c6ad5903d2bf9337762caa9c357247279c230c3"
+		},
+		{
+			"ImportPath": "github.com/martini-contrib/auth",
+			"Rev": "fa62c19b7ae87da370242054c8beb11af31d327f"
+		},
+		{
+			"ImportPath": "github.com/martini-contrib/render",
+			"Rev": "ec18f8345a1181146728238980606fb1d6f40e8c"
+		},
+		{
+			"ImportPath": "github.com/oxtoacart/bpool",
+			"Rev": "4e1c5567d7c2dd59fa4c7c83d34c2f3528b025d6"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
+		}
+	]
+}

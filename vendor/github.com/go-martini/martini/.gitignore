@@ -21,6 +21,10 @@ _testmain.go
 
 *.exe
 *.test
-*.prof
 
-witch
+/.godeps
+/.envrc
+
+# Godeps
+Godeps/_workspace
+Godeps/Readme
