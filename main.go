@@ -3,39 +3,24 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	logging "log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/Eagle-X/witch/system"
 )
 
 // Variables
 var (
-	log          = logging.New(os.Stdout, "witch: ", logging.Ldate|logging.Ltime|logging.Lmicroseconds|logging.Lshortfile)
-	stopWaitSecs = 5
+	log      = logging.New(os.Stdout, "witch: ", logging.Ldate|logging.Ltime|logging.Lmicroseconds|logging.Lshortfile)
+	confFile string
 )
 
-type opts struct {
-	confFile string
-	execPath string
-	execArgs []string
-}
-
-func (o *opts) parse() {
-	args := os.Args
-	if len(args) < 3 {
-		log.Printf("More arguments required")
-		usage()
-		os.Exit(1)
-	}
-	o.confFile = args[1]
-	o.execPath = args[2]
-	o.execArgs = args[3:]
-}
-
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: witch [config file] [cmd path] [cmd arguments]\n")
+func init() {
+	flag.StringVar(&confFile, "c", "witch.yaml", "Config file")
+	flag.Parse()
 }
 
 func handleSignals(exitFunc func()) {
@@ -46,19 +31,27 @@ func handleSignals(exitFunc func()) {
 	exitFunc()
 }
 
-func main() {
-	op := &opts{}
-	op.parse()
+func createSystem(cfg *Config) system.System {
+	switch cfg.Control {
+	case "buildin":
+		return system.NewLauncher(cfg.PidFile, cfg.Command)
+		//case "supervisor":
+		//case "systemd":
+	}
+	log.Fatalf("Invalid control '%s'", cfg.Control)
+	return nil
+}
 
+func main() {
 	cfg := &Config{}
-	if err := cfg.Parse(op.confFile); err != nil {
+	if err := cfg.Parse(confFile); err != nil {
 		log.Fatalf("Parse config file error: %v", err)
 	}
 
-	sys := NewSystem(cfg.PidFile, op.execPath, op.execArgs)
+	sys := createSystem(cfg)
 	sys.Start()
 
-	ser := NewServer(cfg.ListenAddr, sys, cfg)
+	ser := NewServer(cfg.ListenAddr, &system.Controller{sys}, cfg)
 	go func() {
 		if err := ser.Start(); err != nil {
 			log.Fatalf("Start system server faile: %v", err)

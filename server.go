@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Eagle-X/witch/system"
 	"github.com/braintree/manners"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/auth"
@@ -19,7 +20,7 @@ type Server struct {
 }
 
 // NewServer inits a system RESTful web server.
-func NewServer(addr string, sys *System, cfg *Config) *Server {
+func NewServer(addr string, control *system.Controller, cfg *Config) *Server {
 	ser := &Server{
 		addr: addr,
 		m:    martini.Classic(),
@@ -28,7 +29,7 @@ func NewServer(addr string, sys *System, cfg *Config) *Server {
 		pwd, ok := cfg.Auth[username]
 		return ok && pwd == password
 	}).(func(http.ResponseWriter, *http.Request, martini.Context))
-	ser.m.Map(sys)
+	ser.m.Map(control)
 	ser.m.Use(authInclusive("/api", authFunc))
 	ser.m.Use(render.Renderer(render.Options{}))
 	ser.m.Put("/api/app/actions", sysAction)

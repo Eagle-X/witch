@@ -1,9 +1,8 @@
 // Copyright 2016 Eleme Inc. All rights reserved.
 
-package main
+package system
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,29 +12,27 @@ import (
 	"time"
 )
 
-// System supervises the process status, start, stop and restart.
-type System struct {
-	pidFile  string
-	execPath string
-	execArgs []string
+// Launcher supervises the process status, start, stop and restart.
+type Launcher struct {
+	pidFile string
+	cmd     string
 }
 
-// NewSystem creates new system.
-func NewSystem(pidFile, execPath string, execArgs []string) *System {
-	return &System{
-		pidFile:  pidFile,
-		execPath: execPath,
-		execArgs: execArgs,
+// NewLauncher creates new system.
+func NewLauncher(pidFile, cmd string) *Launcher {
+	return &Launcher{
+		pidFile: pidFile,
+		cmd:     cmd,
 	}
 }
 
-func (s *System) writePid(pid int) {
+func (s *Launcher) writePid(pid int) {
 	if err := WriteFile(s.pidFile, []byte(strconv.FormatInt(int64(pid), 10)), 0644); err != nil {
 		log.Fatalf("Failed to write pid file: %s", err)
 	}
 }
 
-func (s *System) readPid() (int, bool) {
+func (s *Launcher) readPid() (int, bool) {
 	f, err := ioutil.ReadFile(s.pidFile)
 	if err != nil {
 		log.Printf("Error reading pid file[%s]: %s", s.pidFile, err)
@@ -51,12 +48,12 @@ func (s *System) readPid() (int, bool) {
 	return pid, true
 }
 
-func (s *System) pidAlive(pid int) bool {
+func (s *Launcher) pidAlive(pid int) bool {
 	return (syscall.Kill(pid, 0) == nil)
 }
 
 // IsAlive check if the process alive.
-func (s *System) IsAlive() (int, bool) {
+func (s *Launcher) IsAlive() (int, bool) {
 	pid, ok := s.readPid()
 	if !ok || pid < 1 {
 		return pid, false
@@ -65,14 +62,14 @@ func (s *System) IsAlive() (int, bool) {
 }
 
 // Start starts the process.
-func (s *System) Start() (bool, error) {
+func (s *Launcher) Start() (bool, error) {
 	if pid, ok := s.IsAlive(); ok {
 		log.Printf("The process is alive, pid: %d", pid)
 		return true, nil
 	}
 
-	log.Printf("Starting %s %s", s.execPath, s.execArgs)
-	child := exec.Command(s.execPath, s.execArgs...)
+	log.Printf("Starting [%s]", s.cmd)
+	child := exec.Command("/bin/bash", []string{"-c", s.cmd}...)
 	child.Stdin = os.Stdin
 	child.Stdout = os.Stdout
 	child.Stderr = os.Stderr
@@ -86,13 +83,13 @@ func (s *System) Start() (bool, error) {
 }
 
 // Restart restart the process
-func (s *System) Restart() (bool, error) {
+func (s *Launcher) Restart() (bool, error) {
 	s.Stop()
 	return s.Start()
 }
 
 // Stop stops the process.
-func (s *System) Stop() bool {
+func (s *Launcher) Stop() bool {
 	pid, ok := s.IsAlive()
 	if !ok {
 		log.Printf("The process not alive")
@@ -114,45 +111,6 @@ func (s *System) Stop() bool {
 		syscall.Kill(pid, syscall.SIGKILL)
 	}
 	return true
-}
-
-// Action is the system action.
-type Action struct {
-	Name string `json:"name"`
-}
-
-// ActionStatus is the status of action.
-type ActionStatus struct {
-	Status bool   `json:"status"`
-	Text   string `json:"text"`
-}
-
-// Handle plays action.
-func (s *System) Handle(action *Action) *ActionStatus {
-	var (
-		st  = &ActionStatus{}
-		err error
-	)
-	switch action.Name {
-	case "status":
-		fallthrough
-	case "is_alive":
-		_, st.Status = s.IsAlive()
-	case "start":
-		if st.Status, err = s.Start(); err != nil {
-			st.Text = err.Error()
-		}
-	case "stop":
-		st.Status = s.Stop()
-	case "restart":
-		if st.Status, err = s.Restart(); err != nil {
-			st.Text = err.Error()
-		}
-	default:
-		st.Status, st.Text = false, fmt.Sprintf("Invalid action: %s", action.Name)
-	}
-	log.Printf("Action finished")
-	return st
 }
 
 // WriteFile tries to create parent directory before WriteFile.

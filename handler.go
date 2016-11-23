@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Eagle-X/witch/system"
 	"github.com/martini-contrib/render"
 )
 
@@ -18,7 +19,7 @@ var (
 	ErrBadRequest = errors.New("Bad Request")
 )
 
-func sysAction(sys *System, req *http.Request, r render.Render) {
+func sysAction(control *system.Controller, req *http.Request, r render.Render) {
 	bs, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Read request body error: %s", err)
@@ -26,11 +27,11 @@ func sysAction(sys *System, req *http.Request, r render.Render) {
 		return
 	}
 	log.Printf("Request action: %s", bs)
-	action := &Action{}
+	action := &system.Action{}
 	if err := json.Unmarshal(bs, action); err != nil {
 		log.Printf("Invalid action format: %s", err)
 		r.JSON(http.StatusBadRequest, ErrBadRequest)
 		return
 	}
-	r.JSON(http.StatusOK, sys.Handle(action))
+	r.JSON(http.StatusOK, control.Handle(action))
 }
