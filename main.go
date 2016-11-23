@@ -35,7 +35,8 @@ func createSystem(cfg *Config) system.System {
 	switch cfg.Control {
 	case "buildin":
 		return system.NewLauncher(cfg.PidFile, cfg.Command)
-		//case "supervisor":
+	case "supervisor":
+		return system.NewSupervisor(cfg.Service)
 		//case "systemd":
 	}
 	log.Fatalf("Invalid control '%s'", cfg.Control)

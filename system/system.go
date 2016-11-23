@@ -3,9 +3,11 @@
 package system
 
 import (
+	"bytes"
 	"fmt"
 	logging "log"
 	"os"
+	"os/exec"
 )
 
 var (
@@ -67,4 +69,18 @@ func (c *Controller) Handle(action *Action) *ActionStatus {
 	}
 	log.Printf("Action finished")
 	return st
+}
+
+func execCommand(name string, args []string) (string, error) {
+	var buf bytes.Buffer
+	log.Printf("Exec %s %v", name, args)
+	child := exec.Command(name, args...)
+	child.Stdout = &buf
+	child.Stderr = &buf
+	if err := child.Start(); err != nil {
+		log.Printf("Failed to start: %s", err)
+		return buf.String(), err
+	}
+	child.Wait()
+	return buf.String(), nil
 }
